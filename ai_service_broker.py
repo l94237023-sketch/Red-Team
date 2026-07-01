@@ -1,10 +1,8 @@
 import os
 import requests
-import json
-import random
 from openai import OpenAI
 
-class APIIntegration:
+class AIServiceBroker:
     def __init__(self):
         self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY')) if os.getenv('OPENAI_API_KEY') else None
         self.deepseek_key = os.getenv('DEEPSEEK_API_KEY')
@@ -16,7 +14,7 @@ class APIIntegration:
         try:
             resp = self.openai_client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[{"role": "system", "content": "You are a Gold Level Cybersecurity AI."}, {"role": "user", "content": prompt}],
+                messages=[{"role": "system", "content": "You are a Gold Level Security AI."}, {"role": "user", "content": prompt}],
                 temperature=0.3,
                 max_tokens=300
             )
