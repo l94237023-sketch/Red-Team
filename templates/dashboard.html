@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ultimate Gold AI</title>
+    <title>Gold Security Suite</title>
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -31,14 +31,14 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>👑 ULTIMATE GOLD AI</h1>
-        <div><span class="badge">🔴 LIVE</span> <span class="badge">🧬 SELF-EVOLVING</span></div>
+        <h1>👑 GOLD SECURITY SUITE</h1>
+        <div><span class="badge">🔴 LIVE</span> <span class="badge">🧬 SELF-ENHANCING</span></div>
     </div>
 
     <div class="chat-box">
-        <div class="chat-msgs" id="chatMsgs">> Type any command! Example: "strike 192.168.1.1 gold full"</div>
+        <div class="chat-msgs" id="chatMsgs">> Type any command! Example: "audit 192.168.1.1 gold full"</div>
         <div class="chat-input">
-            <input id="chatInput" placeholder="strike target gold full, add blockchain, plan target...">
+            <input id="chatInput" placeholder="audit target gold full, add blockchain, plan target...">
             <button onclick="sendCmd()">📤 Send</button>
             <button onclick="clearChat()">🗑️</button>
         </div>
@@ -48,29 +48,29 @@
         <div>
             <h3 style="color:#ff8800;">📱 Level 1</h3>
             <input id="l1target" placeholder="Phone/Name">
-            <button class="cmd-btn" onclick="attackLevel('mobile')">Hack Phone</button>
+            <button class="cmd-btn" onclick="auditLevel('mobile')">Hack Phone</button>
         </div>
         <div>
             <h3 style="color:#4488ff;">🌐 Level 2</h3>
             <input id="l2target" placeholder="Server IP">
-            <button class="cmd-btn" onclick="attackLevel('standard')">Scan + Strike</button>
+            <button class="cmd-btn" onclick="auditLevel('standard')">Audit + Probe</button>
         </div>
         <div>
             <h3 style="color:#ffd700;">👑 Level 3 (Gold)</h3>
             <input id="l3target" placeholder="Target">
-            <button class="cmd-btn gold" onclick="attackLevel('gold')">🕵️ Stealth Attack</button>
+            <button class="cmd-btn gold" onclick="auditLevel('gold')">🕵️ Stealth Audit</button>
         </div>
     </div>
 
     <div style="margin-top:15px;">
-        <h3 style="color:#ff44ff;">🧬 Evolution (Only Adds)</h3>
+        <h3 style="color:#ff44ff;">🧬 Enhancement (Only Adds)</h3>
         <input id="evoInput" placeholder="add blockchain, add web3, add docker..." style="width:60%;">
-        <button class="cmd-btn" onclick="evolveAI()">➕ Add Capability</button>
+        <button class="cmd-btn" onclick="enhanceAI()">➕ Add Capability</button>
         <button class="cmd-btn" onclick="getStatus()">📊 Status</button>
         <div id="evoResult"></div>
     </div>
 
-    <div class="terminal" id="terminal">> Ultimate Gold AI ready. Stealth and Power combined.</div>
+    <div class="terminal" id="terminal">> Gold Security Suite ready. Stealth and Power combined.</div>
     <div id="resultArea"></div>
     <!-- DYNAMIC_CAPABILITIES -->
 </div>
@@ -95,22 +95,22 @@ function sendCmd() {
     document.getElementById('chatInput').value = '';
 }
 
-function attackLevel(level) {
+function auditLevel(level) {
     let target = '';
     if(level === 'mobile') target = document.getElementById('l1target').value.trim();
     else if(level === 'standard') target = document.getElementById('l2target').value.trim();
     else if(level === 'gold') target = document.getElementById('l3target').value.trim();
     if(!target) return alert('Enter target');
     const task = 'full';
-    addLog(`⚔️ ${level.toUpperCase()} attack on ${target} (Task: ${task})`, 'log-critical');
-    socket.emit('strike', { target: target, level: level, task: task });
+    addLog(`🔍 ${level.toUpperCase()} audit on ${target} (Task: ${task})`, 'log-critical');
+    socket.emit('audit', { target: target, level: level, task: task });
 }
 
-function evolveAI() {
+function enhanceAI() {
     const name = document.getElementById('evoInput').value.trim();
     if(!name) return alert('Enter capability name (e.g. blockchain)');
-    addLog(`🧬 Evolving: ${name}`, 'log-success');
-    socket.emit('evolve', { name: name });
+    addLog(`🧬 Enhancing: ${name}`, 'log-success');
+    socket.emit('enhance', { name: name });
 }
 
 function getStatus() {
@@ -124,13 +124,13 @@ socket.on('log', (d) => {
 socket.on('chat_response', (d) => addChat(`🤖 AI: ${d.response}`));
 socket.on('update', (d) => {
     const area = document.getElementById('resultArea');
-    if(d.type === 'exfil_data') {
-        let html = `<div class="card">📂 Exfiltrated:<br>`;
+    if(d.type === 'extracted_data') {
+        let html = `<div class="card">📂 Extracted:<br>`;
         d.data.forEach(item => { html += `${JSON.stringify(item)}<br>`; });
         html += `</div>`;
         area.innerHTML += html;
     }
-    if(d.type === 'evolution') {
+    if(d.type === 'enhancement') {
         document.getElementById('evoResult').innerHTML = `<div class="card">🧬 ${d.data.message}</div>`;
         if(d.data.status === 'success') {
             addLog('🔄 New capability added! Reload to see UI updates.', 'success');
@@ -142,6 +142,9 @@ socket.on('update', (d) => {
     }
     if(d.type === 'plan') {
         area.innerHTML += `<div class="card">📋 Plan:<br><pre style="white-space:pre-wrap;color:#ffaa44;">${d.data}</pre></div>`;
+    }
+    if(d.type === 'ports') {
+        area.innerHTML += `<div class="card">📡 Ports: ${d.data.join(', ')}</div>`;
     }
 });
 document.getElementById('chatInput').addEventListener('keydown', (e) => { if(e.key==='Enter') sendCmd(); });
