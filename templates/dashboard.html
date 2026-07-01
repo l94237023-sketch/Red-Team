@@ -3,151 +3,604 @@
 <head>
     <title>Gold Security Suite</title>
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#0a0a0a; color:#00ff41; font-family:'Courier New',monospace; padding:10px; }
-        .container { max-width:1100px; margin:0 auto; }
-        .header { border-bottom:2px solid #ffd700; padding:10px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; }
-        .header h1 { color:#ffd700; text-shadow:0 0 30px #ffd700; }
-        .badge { color:#ffd700; border:1px solid #ffd700; padding:4px 12px; border-radius:20px; animation:blink 1s infinite; }
+        body {
+            background: #0a0a0a;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        /* ===== HEADER ===== */
+        .header {
+            background: #0a0a0a;
+            border-bottom: 2px solid #ffd700;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .header h1 {
+            color: #ffd700;
+            font-size: 1.2rem;
+            text-shadow: 0 0 20px #ffd700;
+        }
+        .header .badge {
+            color: #ffd700;
+            border: 1px solid #ffd700;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.6rem;
+            animation: blink 1s infinite;
+        }
         @keyframes blink { 50%{opacity:0;} }
-        .chat-box { background:#111; border:2px solid #ffd700; border-radius:10px; padding:15px; margin:15px 0; }
-        .chat-msgs { height:150px; overflow-y:auto; font-size:0.85rem; color:#88ff88; }
-        .chat-input { display:flex; gap:10px; margin-top:10px; }
-        .chat-input input { flex:1; background:#0a0a0a; border:1px solid #ffd700; padding:10px; border-radius:5px; color:#00ff41; }
-        .chat-input button { background:#442200; border:1px solid #ffd700; color:#ffd700; padding:10px 20px; border-radius:5px; cursor:pointer; }
-        .terminal { background:#0a0a0a; border:1px solid #00ff41; padding:15px; height:200px; overflow-y:auto; font-size:0.8rem; margin-top:15px; }
-        .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; margin-top:15px; }
-        @media(max-width:700px){ .grid{grid-template-columns:1fr;} }
-        .card { background:#111; padding:15px; border-left:4px solid #ffd700; margin:10px 0; }
-        .cmd-btn { background:#003300; border:1px solid #00ff41; padding:8px 15px; border-radius:5px; color:#00ff41; cursor:pointer; margin:5px; }
-        .cmd-btn.gold { background:#332200; border-color:#ffd700; color:#ffd700; }
-        .log-critical { color:#ff0040; font-weight:bold; text-shadow:0 0 10px #ff0040; }
-        .log-success { color:#00ff41; }
-        input { background:#111; color:#00ff41; border:1px solid #00ff41; padding:8px; border-radius:5px; width:100%; margin:5px 0; }
+
+        /* ===== PANEL CONTAINER ===== */
+        .panel-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px 80px 16px; /* bottom space for nav */
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .panel {
+            display: none;
+            animation: fadeUp 0.3s ease;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .panel.active {
+            display: flex;
+        }
+        @keyframes fadeUp {
+            0% { opacity:0; transform:translateY(10px); }
+            100% { opacity:1; transform:translateY(0); }
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: #111;
+            border-left: 4px solid #ffd700;
+            padding: 14px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+        .card-title {
+            color: #ffd700;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        .card-content {
+            font-size: 0.8rem;
+            color: #88ff88;
+        }
+
+        /* ===== INPUTS & BUTTONS ===== */
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 6px 0;
+        }
+        .input-group input {
+            flex: 1;
+            min-width: 120px;
+            background: #111;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.8rem;
+        }
+        .input-group button {
+            background: #003300;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .input-group button.gold {
+            background: #332200;
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+        .input-group button.purple {
+            background: #330033;
+            border-color: #ff44ff;
+            color: #ff44ff;
+        }
+
+        /* ===== CHAT ===== */
+        .chat-box {
+            background: #111;
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .chat-messages {
+            height: 120px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            color: #88ff88;
+            padding: 4px;
+        }
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .chat-input-row input {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid #ffd700;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: #00ff41;
+            font-family: inherit;
+            font-size: 0.8rem;
+        }
+        .chat-input-row button {
+            background: #442200;
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        /* ===== TERMINAL ===== */
+        .terminal {
+            background: #0a0a0a;
+            border: 1px solid #00ff41;
+            padding: 10px;
+            border-radius: 6px;
+            height: 140px;
+            overflow-y: auto;
+            font-size: 0.7rem;
+            line-height: 1.5;
+            color: #88ff88;
+        }
+        .terminal .critical { color: #ff0040; font-weight:bold; text-shadow:0 0 10px #ff0040; }
+        .terminal .success { color: #00ff41; }
+        .terminal .warning { color: #ff8800; }
+        .terminal .gold { color: #ffd700; }
+
+        /* ===== BOTTOM NAVIGATION ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0a0a0a;
+            border-top: 2px solid #ffd700;
+            display: flex;
+            justify-content: space-around;
+            padding: 6px 0 env(safe-area-inset-bottom) 0;
+            z-index: 20;
+            flex-shrink: 0;
+        }
+        .nav-item {
+            color: #555;
+            font-size: 0.6rem;
+            text-align: center;
+            padding: 4px 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .nav-item .icon {
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+        .nav-item .label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .nav-item.active {
+            color: #ffd700;
+        }
+        .nav-item.active .icon {
+            text-shadow: 0 0 12px #ffd700;
+        }
+        .nav-item:hover {
+            color: #88ff88;
+        }
+
+        /* ===== STATUS GRID ===== */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .status-item {
+            background: #111;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid #00ff41;
+        }
+        .status-item .label {
+            color: #888;
+            font-size: 0.6rem;
+        }
+        .status-item .value {
+            color: #00ff41;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #ffd700; border-radius: 4px; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 500px) {
+            .header h1 { font-size: 1rem; }
+            .input-group input { min-width: 80px; }
+            .panel-container { padding: 8px 10px 70px 10px; }
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>👑 GOLD SECURITY SUITE</h1>
-        <div><span class="badge">🔴 LIVE</span> <span class="badge">🧬 SELF-ENHANCING</span></div>
-    </div>
 
-    <div class="chat-box">
-        <div class="chat-msgs" id="chatMsgs">> Type any command! Example: "audit 192.168.1.1 gold full"</div>
-        <div class="chat-input">
-            <input id="chatInput" placeholder="audit target gold full, add blockchain, plan target...">
-            <button onclick="sendCmd()">📤 Send</button>
-            <button onclick="clearChat()">🗑️</button>
+<!-- ===== HEADER ===== -->
+<div class="header">
+    <h1>👑 GOLD SECURITY</h1>
+    <div>
+        <span class="badge">🔴 LIVE</span>
+        <span class="badge" style="margin-left:6px;">🧬 EVOLVING</span>
+    </div>
+</div>
+
+<!-- ===== PANEL CONTAINER ===== -->
+<div class="panel-container" id="panelContainer">
+
+    <!-- PANEL 1: DASHBOARD (HOME) -->
+    <div class="panel active" id="panelHome">
+        <div class="card">
+            <div class="card-title">📊 System Status</div>
+            <div class="status-grid" id="statusGrid">
+                <div class="status-item"><span class="label">Generation</span><div class="value" id="genVal">0</div></div>
+                <div class="status-item"><span class="label">Capabilities</span><div class="value" id="capCount">0</div></div>
+                <div class="status-item"><span class="label">Modules</span><div class="value" id="modCount">0</div></div>
+                <div class="status-item"><span class="label">Status</span><div class="value" id="aiStatus">✅ READY</div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">📋 Quick Actions</div>
+            <div class="input-group">
+                <input id="quickTarget" placeholder="Target (IP or Name)" value="192.168.1.1">
+                <button class="gold" onclick="quickAudit('gold')">👑 Gold</button>
+                <button onclick="quickAudit('standard')">🌐 Std</button>
+                <button onclick="quickAudit('mobile')">📱 Mobile</button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">📡 Terminal</div>
+            <div class="terminal" id="terminal">> Gold Security Suite ready.<br>> Type commands in chat or use quick actions.</div>
         </div>
     </div>
 
-    <div class="grid">
-        <div>
-            <h3 style="color:#ff8800;">📱 Level 1</h3>
-            <input id="l1target" placeholder="Phone/Name">
-            <button class="cmd-btn" onclick="auditLevel('mobile')">Hack Phone</button>
+    <!-- PANEL 2: CHAT (COMMAND CENTER) -->
+    <div class="panel" id="panelChat">
+        <div class="card">
+            <div class="card-title">💬 AI Chat Commands</div>
+            <div class="chat-box">
+                <div class="chat-messages" id="chatMsgs">> Type a command below.<br>> Example: audit 192.168.1.1 gold full</div>
+                <div class="chat-input-row">
+                    <input id="chatInput" placeholder="audit target level task ...">
+                    <button onclick="sendChat()">📤 Send</button>
+                </div>
+            </div>
         </div>
-        <div>
-            <h3 style="color:#4488ff;">🌐 Level 2</h3>
-            <input id="l2target" placeholder="Server IP">
-            <button class="cmd-btn" onclick="auditLevel('standard')">Audit + Probe</button>
+        <div class="card">
+            <div class="card-title">📚 Quick Commands</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                <button class="gold" onclick="sendQuick('audit 192.168.1.1 gold full')">👑 Gold Audit</button>
+                <button onclick="sendQuick('audit server.com standard full')">🌐 Std Audit</button>
+                <button onclick="sendQuick('audit john mobile full')">📱 Mobile Hack</button>
+                <button onclick="sendQuick('plan company.com gold')">📋 Gold Plan</button>
+                <button onclick="sendQuick('add blockchain')">➕ Add Blockchain</button>
+                <button onclick="sendQuick('status')">📊 Status</button>
+            </div>
         </div>
-        <div>
-            <h3 style="color:#ffd700;">👑 Level 3 (Gold)</h3>
-            <input id="l3target" placeholder="Target">
-            <button class="cmd-btn gold" onclick="auditLevel('gold')">🕵️ Stealth Audit</button>
+        <div class="card">
+            <div class="card-title">🧬 Enhancement</div>
+            <div class="input-group">
+                <input id="evoInput" placeholder="add capability name (e.g. web3)">
+                <button class="purple" onclick="sendQuick('add '+document.getElementById('evoInput').value.trim())">➕ Add</button>
+            </div>
+            <div id="evoResult" style="margin-top:6px;font-size:0.8rem;color:#ff44ff;"></div>
         </div>
     </div>
 
-    <div style="margin-top:15px;">
-        <h3 style="color:#ff44ff;">🧬 Enhancement (Only Adds)</h3>
-        <input id="evoInput" placeholder="add blockchain, add web3, add docker..." style="width:60%;">
-        <button class="cmd-btn" onclick="enhanceAI()">➕ Add Capability</button>
-        <button class="cmd-btn" onclick="getStatus()">📊 Status</button>
-        <div id="evoResult"></div>
+    <!-- PANEL 3: LEVELS (ATTACK PANELS) -->
+    <div class="panel" id="panelLevels">
+        <div class="card">
+            <div class="card-title" style="color:#ff8800;">📱 Level 1: Mobile</div>
+            <div class="input-group">
+                <input id="l1target" placeholder="Phone number or name">
+                <button onclick="levelAudit('mobile')" style="border-color:#ff8800;color:#ff8800;">🔓 Hack Phone</button>
+            </div>
+            <div id="l1result" style="font-size:0.8rem;margin-top:4px;"></div>
+        </div>
+        <div class="card">
+            <div class="card-title" style="color:#4488ff;">🌐 Level 2: Standard Server</div>
+            <div class="input-group">
+                <input id="l2target" placeholder="Server IP or domain">
+                <button onclick="levelAudit('standard')" style="border-color:#4488ff;color:#4488ff;">🔍 Audit + Probe</button>
+            </div>
+            <div id="l2result" style="font-size:0.8rem;margin-top:4px;"></div>
+        </div>
+        <div class="card">
+            <div class="card-title" style="color:#ffd700;">👑 Level 3: Gold (Stealth)</div>
+            <div class="input-group">
+                <input id="l3target" placeholder="Target">
+                <button class="gold" onclick="levelAudit('gold')">🕵️ Stealth Audit</button>
+            </div>
+            <div id="l3result" style="font-size:0.8rem;margin-top:4px;"></div>
+        </div>
     </div>
 
-    <div class="terminal" id="terminal">> Gold Security Suite ready. Stealth and Power combined.</div>
-    <div id="resultArea"></div>
-    <!-- DYNAMIC_CAPABILITIES -->
+    <!-- PANEL 4: EXFILTRATED DATA -->
+    <div class="panel" id="panelData">
+        <div class="card">
+            <div class="card-title">📂 Extracted / Exfiltrated Data</div>
+            <div id="dataDisplay" style="font-size:0.75rem;color:#88ff88;max-height:300px;overflow-y:auto;">
+                <div style="color:#555;">No data extracted yet.</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">🧾 Recent Activity</div>
+            <div id="activityLog" style="font-size:0.7rem;color:#888;max-height:150px;overflow-y:auto;">
+                <div>⏳ Waiting for activity...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 5: SETTINGS / EVOLUTION -->
+    <div class="panel" id="panelSettings">
+        <div class="card">
+            <div class="card-title">🧬 AI Evolution Status</div>
+            <div id="evoStatusDisplay">
+                <div>Generation: <span id="evoGen">0</span></div>
+                <div>Capabilities: <span id="evoCaps">None</span></div>
+                <div>Total Modules: <span id="evoCount">0</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">➕ Add New Capability</div>
+            <div class="input-group">
+                <input id="evoAddInput" placeholder="e.g. blockchain, web3, docker">
+                <button class="purple" onclick="sendQuick('add '+document.getElementById('evoAddInput').value.trim())">➕ Add</button>
+            </div>
+            <div id="evoAddResult" style="font-size:0.8rem;color:#ff44ff;margin-top:6px;"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">📊 AI Status</div>
+            <button onclick="sendQuick('status')">🔄 Refresh Status</button>
+            <div id="statusDisplay" style="font-size:0.8rem;margin-top:6px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== BOTTOM NAVIGATION ===== -->
+<div class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-panel="panelHome">
+        <span class="icon">🏠</span>
+        <span class="label">Home</span>
+    </button>
+    <button class="nav-item" data-panel="panelChat">
+        <span class="icon">💬</span>
+        <span class="label">Chat</span>
+    </button>
+    <button class="nav-item" data-panel="panelLevels">
+        <span class="icon">⚔️</span>
+        <span class="label">Levels</span>
+    </button>
+    <button class="nav-item" data-panel="panelData">
+        <span class="icon">📂</span>
+        <span class="label">Data</span>
+    </button>
+    <button class="nav-item" data-panel="panelSettings">
+        <span class="icon">⚙️</span>
+        <span class="label">Settings</span>
+    </button>
 </div>
 
 <script>
-const socket = io();
-const terminal = document.getElementById('terminal');
-const chatMsgs = document.getElementById('chatMsgs');
+    const socket = io();
 
-function addLog(msg, cls='') {
-    terminal.innerHTML += `<div class="${cls}">> ${msg}</div>`;
-    terminal.scrollTop = terminal.scrollHeight;
-}
-function addChat(msg) { chatMsgs.innerHTML += `\n${msg}`; chatMsgs.scrollTop = chatMsgs.scrollHeight; }
-function clearChat() { chatMsgs.innerHTML = '> Chat cleared.'; }
+    // ===== NAVIGATION =====
+    const navItems = document.querySelectorAll('.nav-item');
+    const panels = {
+        home: document.getElementById('panelHome'),
+        chat: document.getElementById('panelChat'),
+        levels: document.getElementById('panelLevels'),
+        data: document.getElementById('panelData'),
+        settings: document.getElementById('panelSettings')
+    };
 
-function sendCmd() {
-    const cmd = document.getElementById('chatInput').value.trim();
-    if(!cmd) return;
-    addChat(`👤 You: ${cmd}`);
-    socket.emit('chat_command', { command: cmd });
-    document.getElementById('chatInput').value = '';
-}
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const targetId = this.dataset.panel;
+            // update nav
+            navItems.forEach(n => n.classList.remove('active'));
+            this.classList.add('active');
+            // update panels
+            Object.values(panels).forEach(p => p.classList.remove('active'));
+            const targetPanel = document.getElementById(targetId);
+            if (targetPanel) targetPanel.classList.add('active');
+        });
+    });
 
-function auditLevel(level) {
-    let target = '';
-    if(level === 'mobile') target = document.getElementById('l1target').value.trim();
-    else if(level === 'standard') target = document.getElementById('l2target').value.trim();
-    else if(level === 'gold') target = document.getElementById('l3target').value.trim();
-    if(!target) return alert('Enter target');
-    const task = 'full';
-    addLog(`🔍 ${level.toUpperCase()} audit on ${target} (Task: ${task})`, 'log-critical');
-    socket.emit('audit', { target: target, level: level, task: task });
-}
-
-function enhanceAI() {
-    const name = document.getElementById('evoInput').value.trim();
-    if(!name) return alert('Enter capability name (e.g. blockchain)');
-    addLog(`🧬 Enhancing: ${name}`, 'log-success');
-    socket.emit('enhance', { name: name });
-}
-
-function getStatus() {
-    socket.emit('chat_command', { command: 'status' });
-}
-
-socket.on('log', (d) => {
-    const cls = d.type === 'critical' ? 'log-critical' : d.type === 'success' ? 'log-success' : '';
-    addLog(d.msg, cls);
-});
-socket.on('chat_response', (d) => addChat(`🤖 AI: ${d.response}`));
-socket.on('update', (d) => {
-    const area = document.getElementById('resultArea');
-    if(d.type === 'extracted_data') {
-        let html = `<div class="card">📂 Extracted:<br>`;
-        d.data.forEach(item => { html += `${JSON.stringify(item)}<br>`; });
-        html += `</div>`;
-        area.innerHTML += html;
+    // ===== HELPERS =====
+    function addLog(msg, cls='') {
+        const term = document.getElementById('terminal');
+        term.innerHTML += `<div class="${cls}">> ${msg}</div>`;
+        term.scrollTop = term.scrollHeight;
     }
-    if(d.type === 'enhancement') {
-        document.getElementById('evoResult').innerHTML = `<div class="card">🧬 ${d.data.message}</div>`;
-        if(d.data.status === 'success') {
-            addLog('🔄 New capability added! Reload to see UI updates.', 'success');
+
+    function addChat(msg) {
+        const chat = document.getElementById('chatMsgs');
+        chat.innerHTML += `\n${msg}`;
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    function addData(item) {
+        const display = document.getElementById('dataDisplay');
+        display.innerHTML += `<div>📄 ${JSON.stringify(item).substring(0,150)}</div>`;
+        display.scrollTop = display.scrollHeight;
+    }
+
+    function addActivity(msg) {
+        const log = document.getElementById('activityLog');
+        log.innerHTML += `<div>🕒 ${new Date().toLocaleTimeString()} - ${msg}</div>`;
+        log.scrollTop = log.scrollHeight;
+    }
+
+    // ===== SOCKET EVENTS =====
+    socket.on('connect', () => {
+        addLog('✅ Connected to AI Engine', 'success');
+        addActivity('Connected to server');
+    });
+
+    socket.on('log', (data) => {
+        const cls = data.type === 'critical' ? 'critical' : 
+                    data.type === 'success' ? 'success' : 
+                    data.type === 'warning' ? 'warning' : '';
+        addLog(data.msg, cls);
+        addActivity(data.msg);
+    });
+
+    socket.on('chat_response', (data) => {
+        addChat(`🤖 AI: ${data.response}`);
+    });
+
+    socket.on('update', (data) => {
+        if (data.type === 'extracted_data') {
+            data.data.forEach(item => addData(item));
+            addActivity('✅ Data extracted');
         }
+        if (data.type === 'enhancement') {
+            document.getElementById('evoResult').innerHTML = data.data.message;
+            document.getElementById('evoAddResult').innerHTML = data.data.message;
+            if (data.data.status === 'success') {
+                addLog('🧬 New capability added!', 'success');
+                addActivity('🧬 Enhanced: ' + data.data.message);
+            }
+        }
+        if (data.type === 'status') {
+            const s = data.data;
+            document.getElementById('genVal').textContent = s.generation || 0;
+            document.getElementById('capCount').textContent = s.count || 0;
+            document.getElementById('modCount').textContent = s.capabilities ? s.capabilities.length : 0;
+            document.getElementById('evoGen').textContent = s.generation || 0;
+            document.getElementById('evoCaps').textContent = s.capabilities ? s.capabilities.join(', ') : 'None';
+            document.getElementById('evoCount').textContent = s.count || 0;
+            document.getElementById('statusDisplay').innerHTML = 
+                `🧬 Gen: ${s.generation}<br>📦 Capabilities: ${s.capabilities ? s.capabilities.join(', ') : 'None'}<br>📊 Count: ${s.count}`;
+            addActivity('📊 Status updated');
+        }
+        if (data.type === 'plan') {
+            document.getElementById('dataDisplay').innerHTML = 
+                `<div style="white-space:pre-wrap;color:#ffaa44;">${data.data}</div>`;
+            addActivity('📋 Plan generated');
+        }
+        if (data.type === 'ports') {
+            addLog(`📡 Ports: ${data.data.join(', ')}`, 'gold');
+        }
+    });
+
+    // ===== SEND COMMANDS =====
+    function sendCommand(cmd) {
+        if (!cmd) return;
+        addChat(`👤 You: ${cmd}`);
+        socket.emit('chat_command', { command: cmd });
     }
-    if(d.type === 'status') {
-        const s = d.data;
-        area.innerHTML += `<div class="card">🧬 Gen: ${s.generation}<br>📦 Capabilities: ${s.capabilities.join(', ')}<br>📊 Count: ${s.count}</div>`;
+
+    function sendChat() {
+        const input = document.getElementById('chatInput');
+        const cmd = input.value.trim();
+        if (!cmd) return;
+        sendCommand(cmd);
+        input.value = '';
     }
-    if(d.type === 'plan') {
-        area.innerHTML += `<div class="card">📋 Plan:<br><pre style="white-space:pre-wrap;color:#ffaa44;">${d.data}</pre></div>`;
+
+    function sendQuick(cmd) {
+        if (!cmd) return;
+        sendCommand(cmd);
     }
-    if(d.type === 'ports') {
-        area.innerHTML += `<div class="card">📡 Ports: ${d.data.join(', ')}</div>`;
+
+    // ===== QUICK AUDIT =====
+    function quickAudit(level) {
+        const target = document.getElementById('quickTarget').value.trim();
+        if (!target) { alert('Enter target'); return; }
+        const task = 'full';
+        const cmd = `audit ${target} ${level} ${task}`;
+        sendCommand(cmd);
+        addLog(`🔍 ${level.toUpperCase()} audit on ${target}`, 'critical');
+        addActivity(`🔍 ${level} audit on ${target}`);
     }
-});
-document.getElementById('chatInput').addEventListener('keydown', (e) => { if(e.key==='Enter') sendCmd(); });
+
+    function levelAudit(level) {
+        let target = '';
+        if (level === 'mobile') target = document.getElementById('l1target').value.trim();
+        else if (level === 'standard') target = document.getElementById('l2target').value.trim();
+        else if (level === 'gold') target = document.getElementById('l3target').value.trim();
+        if (!target) { alert('Enter target'); return; }
+        const task = 'full';
+        const cmd = `audit ${target} ${level} ${task}`;
+        sendCommand(cmd);
+        addLog(`🔍 ${level.toUpperCase()} audit on ${target}`, 'critical');
+        addActivity(`🔍 ${level} audit on ${target}`);
+        // clear result fields
+        document.getElementById('l1result').innerHTML = '';
+        document.getElementById('l2result').innerHTML = '';
+        document.getElementById('l3result').innerHTML = '';
+    }
+
+    // ===== ENTER KEY =====
+    document.getElementById('chatInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendChat();
+    });
+    document.getElementById('evoInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendQuick('add '+e.target.value.trim());
+    });
+    document.getElementById('evoAddInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendQuick('add '+e.target.value.trim());
+    });
+
+    // ===== INIT =====
+    addLog('👑 Gold Security Suite loaded.', 'gold');
+    addLog('💬 Type commands in Chat or use Quick Actions.', 'gold');
+    addActivity('🚀 System initialized');
+    // Auto-status
+    setTimeout(() => sendCommand('status'), 500);
 </script>
 </body>
 </html>
