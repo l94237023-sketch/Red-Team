@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ultimate Gold AI</title>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0a0a; color:#00ff41; font-family:'Courier New',monospace; padding:10px; }
+        .container { max-width:1100px; margin:0 auto; }
+        .header { border-bottom:2px solid #ffd700; padding:10px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; }
+        .header h1 { color:#ffd700; text-shadow:0 0 30px #ffd700; }
+        .badge { color:#ffd700; border:1px solid #ffd700; padding:4px 12px; border-radius:20px; animation:blink 1s infinite; }
+        @keyframes blink { 50%{opacity:0;} }
+        .chat-box { background:#111; border:2px solid #ffd700; border-radius:10px; padding:15px; margin:15px 0; }
+        .chat-msgs { height:150px; overflow-y:auto; font-size:0.85rem; color:#88ff88; }
+        .chat-input { display:flex; gap:10px; margin-top:10px; }
+        .chat-input input { flex:1; background:#0a0a0a; border:1px solid #ffd700; padding:10px; border-radius:5px; color:#00ff41; }
+        .chat-input button { background:#442200; border:1px solid #ffd700; color:#ffd700; padding:10px 20px; border-radius:5px; cursor:pointer; }
+        .terminal { background:#0a0a0a; border:1px solid #00ff41; padding:15px; height:200px; overflow-y:auto; font-size:0.8rem; margin-top:15px; }
+        .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; margin-top:15px; }
+        @media(max-width:700px){ .grid{grid-template-columns:1fr;} }
+        .card { background:#111; padding:15px; border-left:4px solid #ffd700; margin:10px 0; }
+        .cmd-btn { background:#003300; border:1px solid #00ff41; padding:8px 15px; border-radius:5px; color:#00ff41; cursor:pointer; margin:5px; }
+        .cmd-btn.gold { background:#332200; border-color:#ffd700; color:#ffd700; }
+        .log-critical { color:#ff0040; font-weight:bold; text-shadow:0 0 10px #ff0040; }
+        .log-success { color:#00ff41; }
+        input { background:#111; color:#00ff41; border:1px solid #00ff41; padding:8px; border-radius:5px; width:100%; margin:5px 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>👑 ULTIMATE GOLD AI</h1>
+        <div><span class="badge">🔴 LIVE</span> <span class="badge">🧬 SELF-EVOLVING</span></div>
+    </div>
+
+    <div class="chat-box">
+        <div class="chat-msgs" id="chatMsgs">> Type any command! Example: "strike 192.168.1.1 gold full"</div>
+        <div class="chat-input">
+            <input id="chatInput" placeholder="strike target gold full, add blockchain, plan target...">
+            <button onclick="sendCmd()">📤 Send</button>
+            <button onclick="clearChat()">🗑️</button>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div>
+            <h3 style="color:#ff8800;">📱 Level 1</h3>
+            <input id="l1target" placeholder="Phone/Name">
+            <button class="cmd-btn" onclick="attackLevel('mobile')">Hack Phone</button>
+        </div>
+        <div>
+            <h3 style="color:#4488ff;">🌐 Level 2</h3>
+            <input id="l2target" placeholder="Server IP">
+            <button class="cmd-btn" onclick="attackLevel('standard')">Scan + Strike</button>
+        </div>
+        <div>
+            <h3 style="color:#ffd700;">👑 Level 3 (Gold)</h3>
+            <input id="l3target" placeholder="Target">
+            <button class="cmd-btn gold" onclick="attackLevel('gold')">🕵️ Stealth Attack</button>
+        </div>
+    </div>
+
+    <div style="margin-top:15px;">
+        <h3 style="color:#ff44ff;">🧬 Evolution (Only Adds)</h3>
+        <input id="evoInput" placeholder="add blockchain, add web3, add docker..." style="width:60%;">
+        <button class="cmd-btn" onclick="evolveAI()">➕ Add Capability</button>
+        <button class="cmd-btn" onclick="getStatus()">📊 Status</button>
+        <div id="evoResult"></div>
+    </div>
+
+    <div class="terminal" id="terminal">> Ultimate Gold AI ready. Stealth and Power combined.</div>
+    <div id="resultArea"></div>
+    <!-- DYNAMIC_CAPABILITIES -->
+</div>
+
+<script>
+const socket = io();
+const terminal = document.getElementById('terminal');
+const chatMsgs = document.getElementById('chatMsgs');
+
+function addLog(msg, cls='') {
+    terminal.innerHTML += `<div class="${cls}">> ${msg}</div>`;
+    terminal.scrollTop = terminal.scrollHeight;
+}
+function addChat(msg) { chatMsgs.innerHTML += `\n${msg}`; chatMsgs.scrollTop = chatMsgs.scrollHeight; }
+function clearChat() { chatMsgs.innerHTML = '> Chat cleared.'; }
+
+function sendCmd() {
+    const cmd = document.getElementById('chatInput').value.trim();
+    if(!cmd) return;
+    addChat(`👤 You: ${cmd}`);
+    socket.emit('chat_command', { command: cmd });
+    document.getElementById('chatInput').value = '';
+}
+
+function attackLevel(level) {
+    let target = '';
+    if(level === 'mobile') target = document.getElementById('l1target').value.trim();
+    else if(level === 'standard') target = document.getElementById('l2target').value.trim();
+    else if(level === 'gold') target = document.getElementById('l3target').value.trim();
+    if(!target) return alert('Enter target');
+    const task = 'full';
+    addLog(`⚔️ ${level.toUpperCase()} attack on ${target} (Task: ${task})`, 'log-critical');
+    socket.emit('strike', { target: target, level: level, task: task });
+}
+
+function evolveAI() {
+    const name = document.getElementById('evoInput').value.trim();
+    if(!name) return alert('Enter capability name (e.g. blockchain)');
+    addLog(`🧬 Evolving: ${name}`, 'log-success');
+    socket.emit('evolve', { name: name });
+}
+
+function getStatus() {
+    socket.emit('chat_command', { command: 'status' });
+}
+
+socket.on('log', (d) => {
+    const cls = d.type === 'critical' ? 'log-critical' : d.type === 'success' ? 'log-success' : '';
+    addLog(d.msg, cls);
+});
+socket.on('chat_response', (d) => addChat(`🤖 AI: ${d.response}`));
+socket.on('update', (d) => {
+    const area = document.getElementById('resultArea');
+    if(d.type === 'exfil_data') {
+        let html = `<div class="card">📂 Exfiltrated:<br>`;
+        d.data.forEach(item => { html += `${JSON.stringify(item)}<br>`; });
+        html += `</div>`;
+        area.innerHTML += html;
+    }
+    if(d.type === 'evolution') {
+        document.getElementById('evoResult').innerHTML = `<div class="card">🧬 ${d.data.message}</div>`;
+        if(d.data.status === 'success') {
+            addLog('🔄 New capability added! Reload to see UI updates.', 'success');
+        }
+    }
+    if(d.type === 'status') {
+        const s = d.data;
+        area.innerHTML += `<div class="card">🧬 Gen: ${s.generation}<br>📦 Capabilities: ${s.capabilities.join(', ')}<br>📊 Count: ${s.count}</div>`;
+    }
+    if(d.type === 'plan') {
+        area.innerHTML += `<div class="card">📋 Plan:<br><pre style="white-space:pre-wrap;color:#ffaa44;">${d.data}</pre></div>`;
+    }
+});
+document.getElementById('chatInput').addEventListener('keydown', (e) => { if(e.key==='Enter') sendCmd(); });
+</script>
+</body>
+</html>
