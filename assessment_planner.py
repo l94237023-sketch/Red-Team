@@ -2,7 +2,7 @@ import random
 import time
 from datetime import datetime
 
-class PlannerEngine:
+class AssessmentPlanner:
     def __init__(self, socketio=None):
         self.sio = socketio
 
@@ -17,27 +17,25 @@ class PlannerEngine:
             'timestamp': datetime.now().isoformat(),
             'phases': []
         }
-
         if level == "mobile":
             plan['phases'] = [
                 {'name': 'OSINT', 'tasks': ['Search leaked databases', 'Enumerate emails', 'Find phone number']},
-                {'name': 'Hacking', 'tasks': ['Phishing SMS', 'OTP Intercept', 'Gmail Recovery']},
-                {'name': 'Exfil', 'tasks': ['Extract contacts', 'Export messages']}
+                {'name': 'Access', 'tasks': ['Phishing SMS', 'OTP Intercept', 'Gmail Recovery']},
+                {'name': 'Extract', 'tasks': ['Extract contacts', 'Export messages']}
             ]
         elif level == "gold":
             plan['phases'] = [
                 {'name': 'Passive Recon', 'tasks': ['DNS analysis', 'Subdomain enumeration', 'Tech stack detection'], 'stealth': True},
                 {'name': 'Slow Scan', 'tasks': ['Port scan (1 req/min)', 'Banner grabbing'], 'stealth': True},
-                {'name': 'Stealth Exploit', 'tasks': ['Custom payloads', 'Low & Slow fuzzing'], 'stealth': True},
-                {'name': 'Persistence', 'tasks': ['Worm deployment', 'Scheduled tasks'], 'stealth': True}
+                {'name': 'Stealth Probe', 'tasks': ['Custom payloads', 'Low & Slow fuzzing'], 'stealth': True},
+                {'name': 'Persistence', 'tasks': ['Module deployment', 'Scheduled tasks'], 'stealth': True}
             ]
         else:
             plan['phases'] = [
                 {'name': 'Recon', 'tasks': ['Port scan', 'Service detection']},
-                {'name': 'Exploit', 'tasks': ['SQLi', 'RCE', 'LFI']},
-                {'name': 'Post-Exploit', 'tasks': ['Data exfil', 'Backdoor']}
+                {'name': 'Probe', 'tasks': ['SQLi', 'RCE', 'LFI']},
+                {'name': 'Post-Probe', 'tasks': ['Data extract', 'Backdoor']}
             ]
-        
         self._log(f'✅ Plan generated for {target} ({level})', 'success')
         return plan
 
